@@ -38,4 +38,38 @@ class RandomPolicy(PolicyBase):
 
     def prob(self, state, action):
         return self.probs[action]
-    
+
+
+class DeterministicQPolicy(PolicyBase):
+    """Greedy policy: always selects the action with the highest Q-value."""
+
+    def __init__(self, Q: dict):
+        # Derive action space from Q-table keys
+        action_space = list(next(iter(Q.values())).keys())
+        super().__init__(action_space)
+        self.Q = Q
+
+    def sample(self, state) -> object:
+        q_values = self.Q.get(state)
+        if q_values is None:
+            # Unseen state — fall back to uniform random
+            return np.random.choice(self.action_space)
+        return max(q_values, key=q_values.get)
+
+    def prob(self, state, action) -> float:
+        return 1.0 if action == self.sample(state) else 0.0
+
+
+def make_deterministic_policy(Q: dict) -> PolicyBase:
+    """
+    Construct a greedy deterministic policy from a Q-table.
+
+    Args:
+        Q: Nested dict of shape {state: {action: value}}.
+
+    Returns:
+        A PolicyBase-compatible policy that always picks argmax_a Q[s][a].
+    """
+    if not Q:
+        raise ValueError("Q-table is empty — cannot derive a policy.")
+    return DeterministicQPolicy(Q)

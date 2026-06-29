@@ -1,7 +1,7 @@
 import gymnasium as gym
 import time
 from policy import RandomPolicy
-
+from digitize_state import PoleBalanceDigitizer
 
 #ENV SETUP
 HUMAN_MODE=True
@@ -9,9 +9,19 @@ DISPLAY_LAG_SEC=0.05
 MAX_EPISODE_STEPS=500
 N_EPISODES=3
 
+#REPRESENTATION
+STATE_N_BINS=10
+
 ACTION_SPACE=[0, 1]
 
 if __name__ == "__main__":
+
+
+    digitzer = PoleBalanceDigitizer(cart_position_bins=STATE_N_BINS,
+                                    cart_velocity_bins=STATE_N_BINS,
+                                    pole_angle_bins=STATE_N_BINS,
+                                    pole_angular_velocity_bins=STATE_N_BINS)
+
 
     random_policy = RandomPolicy(
         action_space=ACTION_SPACE,
@@ -41,7 +51,8 @@ if __name__ == "__main__":
             time.sleep(DISPLAY_LAG_SEC)
 
         obs, reward, terminated, truncated, _ = env.step(action)
-        print(f"State = {state}; Action = {action}; Reward={reward}")
+        print(f"State = {state}; Digitized State: {digitzer.transform(obs)}; Action = {action}; Reward={reward}")
+        
         if terminated or truncated:
             current_episode += 1
             print()
