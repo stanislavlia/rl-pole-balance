@@ -1,5 +1,6 @@
 from collections import defaultdict
 import numpy as np
+from digitize_state import PoleBalanceDigitizer
 
 class PolicyBase():
     def __init__(self, action_space: list):
@@ -73,3 +74,33 @@ def make_deterministic_policy(Q: dict) -> PolicyBase:
     if not Q:
         raise ValueError("Q-table is empty — cannot derive a policy.")
     return DeterministicQPolicy(Q)
+
+
+def make_epsilon_soft_policy(
+    action_space: list,
+    Q: dict,
+    epsilon: float = 0.1,
+    digitizer: PoleBalanceDigitizer = None,
+    seed: int = None,
+) -> PolicyBase:
+    rng = np.random.default_rng(seed)
+
+    class _EpsilonSoftPolicy(PolicyBase):
+        def __init__(self):
+            super().__init__(action_space)
+
+        def sample(self, state):
+            key = digitizer(state) if digitizer else state
+            if rng.random() < epsilon:
+                return rng.choice(self.action_space)
+            return max(self.action_space, key=lambda a: Q[key][a])
+
+        def prob(self, state, action) -> float:
+            key = digitizer(state) if digitizer else state
+            greedy = max(self.action_space, key=lambda a: Q[key][a])
+            p = epsilon / len(self.action_space)
+            if action == greedy:
+                p += (1.0 - epsilon)
+            return p
+
+    return _EpsilonSoftPolicy()

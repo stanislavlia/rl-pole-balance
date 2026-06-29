@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 
 class PoleBalanceDigitizer():
     # CartPole observation bounds
@@ -46,3 +47,7 @@ class PoleBalanceDigitizer():
     def n_states(self) -> int:
         """Total number of discrete states (product of all bin counts)."""
         return int(np.prod(self.n_bins))
+
+    def get_all_states(self) -> list:
+        """Return all possible discrete states as a list of tuples."""
+        return list(product(*[range(k) for k in self.n_bins]))

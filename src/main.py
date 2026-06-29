@@ -2,20 +2,29 @@ import gymnasium as gym
 import time
 from policy import RandomPolicy
 from digitize_state import PoleBalanceDigitizer
+from n_step_sarsa import NStepSARSA
+
 
 #ENV SETUP
 HUMAN_MODE=True
 DISPLAY_LAG_SEC=0.05
 MAX_EPISODE_STEPS=500
-N_EPISODES=3
 
 #REPRESENTATION
-STATE_N_BINS=10
+STATE_N_BINS=20
 
 ACTION_SPACE=[0, 1]
 
-if __name__ == "__main__":
+#HYPERPARAMS
+N=6
+ALPHA=0.1
+EPS=0.05
+DISCOUNT=0.97
 
+N_EPISODES=15_000
+
+
+def test_random_policy():
 
     digitzer = PoleBalanceDigitizer(cart_position_bins=STATE_N_BINS,
                                     cart_velocity_bins=STATE_N_BINS,
@@ -63,3 +72,46 @@ if __name__ == "__main__":
             obs, _ = env.reset()
 
     env.close()
+
+if __name__ == "__main__":
+
+    digitzer = PoleBalanceDigitizer(cart_position_bins=STATE_N_BINS,
+                                    cart_velocity_bins=STATE_N_BINS,
+                                    pole_angle_bins=STATE_N_BINS,
+                                    pole_angular_velocity_bins=STATE_N_BINS)
+    
+    
+    env = gym.make("CartPole-v1",
+                   max_episode_steps=MAX_EPISODE_STEPS)
+    
+    algorithm = NStepSARSA(env=env,
+                           eps=EPS,
+                           digitizer=digitzer,
+                           discount=DISCOUNT,
+                           alpha=ALPHA,
+                           n=N)
+    
+    Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=5_000)
+
+    env_human = gym.make("CartPole-v1",
+                         render_mode="human",
+                         max_episode_steps=MAX_EPISODE_STEPS)
+
+    for episode in range(10):
+        obs, _ = env_human.reset()
+        total_reward = 0
+        step = 0
+
+        while True:
+            state = digitzer(obs)
+            action = policy[state]
+            obs, reward, terminated, truncated, _ = env_human.step(action)
+            total_reward += reward
+            step += 1
+            time.sleep(DISPLAY_LAG_SEC)
+
+            if terminated or truncated:
+                print(f"Episode {episode + 1:2d} | Steps: {step:4d} | Total reward: {total_reward:.0f}")
+                break
+
+    env_human.close()
