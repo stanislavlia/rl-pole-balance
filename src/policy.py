@@ -17,6 +17,9 @@ class PolicyBase():
         #returns action
         return self.action_space[0]
 
+    def __getitem__(self, state):
+        return self.sample(state)
+
 
 class RandomPolicy(PolicyBase):
     def __init__(self, action_space, probs=None):
@@ -35,5 +38,4 @@ class RandomPolicy(PolicyBase):
 
     def prob(self, state, action):
         return self.probs[action]
-    
     

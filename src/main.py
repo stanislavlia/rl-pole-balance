@@ -33,7 +33,7 @@ if __name__ == "__main__":
         pole_angle = obs[2]            # positive = leaning right
 
         state = (pole_angle, )
-        action = policy.sample(state)
+        action = policy[state]
 
         
         if HUMAN_MODE:
