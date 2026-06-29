@@ -11,17 +11,17 @@ DISPLAY_LAG_SEC=0.05
 MAX_EPISODE_STEPS=500
 
 #REPRESENTATION
-STATE_N_BINS=20
+STATE_N_BINS=14
 
 ACTION_SPACE=[0, 1]
 
 #HYPERPARAMS
-N=6
-ALPHA=0.1
+N=8
+ALPHA=0.05
 EPS=0.05
-DISCOUNT=0.97
+DISCOUNT=0.99
 
-N_EPISODES=15_000
+N_EPISODES=30_000
 
 
 def test_random_policy():
@@ -91,7 +91,7 @@ if __name__ == "__main__":
                            alpha=ALPHA,
                            n=N)
     
-    Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=5_000)
+    Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=1_000)
 
     env_human = gym.make("CartPole-v1",
                          render_mode="human",
