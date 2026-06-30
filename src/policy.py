@@ -1,6 +1,9 @@
 from collections import defaultdict
 import numpy as np
 from digitize_state import PoleBalanceDigitizer
+import time
+import gymnasium as gym
+
 
 class PolicyBase():
     def __init__(self, action_space: list):
@@ -104,3 +107,54 @@ def make_epsilon_soft_policy(
             return p
 
     return _EpsilonSoftPolicy()
+
+
+def test_policy(env_id, policy, digitizer, n_episodes=10, human=True,
+                 max_episode_steps=500, display_lag_sec=0.02):
+    """
+    Run a policy on CartPole and report results.
+
+    Args:
+        env_id           : gym environment id, e.g. "CartPole-v1".
+        policy            : PolicyBase-compatible policy (uses policy[state]).
+        digitizer         : PoleBalanceDigitizer to discretize raw observations.
+        n_episodes        : number of episodes to run.
+        human             : if True, renders with render_mode="human" + adds delay.
+        max_episode_steps : episode step cap.
+        display_lag_sec   : sleep between steps when human=True (for visibility).
+
+    Returns:
+        List of total rewards, one per episode.
+    """
+    env = gym.make(
+        env_id,
+        render_mode="human" if human else None,
+        max_episode_steps=max_episode_steps,
+    )
+
+    rewards = []
+
+    for episode in range(n_episodes):
+        obs, _ = env.reset()
+        total_reward = 0
+        step = 0
+
+        while True:
+            state = digitizer(obs)
+            action = policy[state]
+            obs, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+            step += 1
+
+            if human:
+                time.sleep(display_lag_sec)
+
+            if terminated or truncated:
+                if human:
+                    print(f"Episode {episode + 1:2d} | Steps: {step:4d} | Total reward: {total_reward:.0f}")
+                break
+
+        rewards.append(total_reward)
+
+    env.close()
+    return rewards
