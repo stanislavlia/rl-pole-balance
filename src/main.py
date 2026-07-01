@@ -21,7 +21,7 @@ N=20
 ALPHA=0.1
 EPS=0.05
 DISCOUNT=0.99
-N_EPISODES=3_000
+N_EPISODES=10_000
 
 
 if __name__ == "__main__":
