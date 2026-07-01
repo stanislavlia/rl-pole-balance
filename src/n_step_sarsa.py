@@ -38,7 +38,7 @@ class NStepSARSA():
 
         return Q
 
-    def control(self, n_episodes=True, verbose=False, report_each_n=1000):
+    def control(self, n_episodes=1000, verbose=False, report_each_n=1000):
         
         Q = self._initialize_Q()
 

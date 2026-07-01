@@ -3,6 +3,7 @@ import time
 from policy import RandomPolicy, test_policy
 from digitize_state import PoleBalanceDigitizer
 from n_step_sarsa import NStepSARSA
+from n_step_sarsa_offpolicy import NStepSarsaOffPolicy
 import numpy as np
 
 #ENV SETUP
@@ -17,10 +18,10 @@ ACTION_SPACE=[0, 1]
 
 #HYPERPARAMS
 N=20
-ALPHA=0.06
-EPS=0.07
+ALPHA=0.1
+EPS=0.05
 DISCOUNT=0.99
-N_EPISODES=10_000
+N_EPISODES=3_000
 
 
 if __name__ == "__main__":
@@ -29,7 +30,11 @@ if __name__ == "__main__":
                                     pole_angle_bins=STATE_N_BINS,
                                     pole_angular_velocity_bins=STATE_N_BINS)
     env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS)
-    algorithm = NStepSARSA(env=env, eps=EPS, digitizer=digitzer,
+
+    # algorithm = NStepSARSA(env=env, eps=EPS, digitizer=digitzer,
+    #                        discount=DISCOUNT, alpha=ALPHA, n=N)
+
+    algorithm = NStepSarsaOffPolicy(env=env, eps=EPS, digitizer=digitzer,
                            discount=DISCOUNT, alpha=ALPHA, n=N)
 
     Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=1_000)
