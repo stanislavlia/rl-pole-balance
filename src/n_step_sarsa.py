@@ -84,6 +84,7 @@ class NStepSARSA():
                     if done: #next_S is terminal
                         
                         if (i+1) % report_each_n == 0 or i == 100:
+                            print()
                             print("CUM REWARD AVERAGE: ", np.mean(cumulative_rewards[-100:]),
                                    " AVG EP LENGTH: ", np.mean(episode_lens[-100:]))
 

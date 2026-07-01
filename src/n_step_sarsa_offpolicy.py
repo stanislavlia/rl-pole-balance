@@ -103,6 +103,7 @@ class NStepSarsaOffPolicy():
                     if done: #next_S is terminal
                         
                         if (i+1) % report_each_n == 0 or i == 100:
+                            print()
                             print("CUM REWARD AVERAGE: ", np.mean(cumulative_rewards[-100:]),
                                    " AVG EP LENGTH: ", np.mean(episode_lens[-100:]))
 
@@ -130,7 +131,7 @@ class NStepSarsaOffPolicy():
                     
                     
                     imp_sampling_ratios_prod = self.calculate_product(imp_sampling_ratios)
-                    print("IMP SAMPL RATIO: ", imp_sampling_ratios_prod)
+                    #print("IMP SAMPL RATIO: ", imp_sampling_ratios_prod)
 
                     #Update Q estimates
                     G_return = sum([
