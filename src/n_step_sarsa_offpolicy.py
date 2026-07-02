@@ -55,6 +55,7 @@ class NStepSarsaOffPolicy():
     
     def control(self, n_episodes=True, verbose=False, report_each_n=1000):
         
+        
         Q = self._initialize_Q()
 
         #initialize target policy: Greedy wrt to Q
@@ -85,6 +86,11 @@ class NStepSarsaOffPolicy():
             states = [state]
             actions = [action]
             rewards = []
+            
+            #CONVENTION:
+            # rewards[j] = R_{j+1}   (offset: book R_k -> rewards[k-1])
+            # states[j]  = S_j       (aligned: book S_k -> states[k])
+            # actions[j] = A_j       (aligned: book A_k -> actions[k])
 
             T = 10 ** 10
 

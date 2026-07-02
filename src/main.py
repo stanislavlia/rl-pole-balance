@@ -22,7 +22,7 @@ N=10
 ALPHA=0.05
 EPS=0.1
 DISCOUNT=0.995
-N_EPISODES=20_000
+N_EPISODES=5_000
 
 
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # algorithm = NStepSarsaOffPolicy(env=env, eps=EPS, digitizer=digitzer,
     #                        discount=DISCOUNT, alpha=ALPHA, n=N)
-    
+
     algorithm = NStepTreeBackup(env=env, eps=EPS, digitizer=digitzer,
                            discount=DISCOUNT, alpha=ALPHA, n=N)
 
