@@ -4,6 +4,7 @@ from policy import RandomPolicy, test_policy
 from digitize_state import PoleBalanceDigitizer
 from n_step_sarsa import NStepSARSA
 from n_step_sarsa_offpolicy import NStepSarsaOffPolicy
+from n_step_tree_backup import NStepTreeBackup
 import numpy as np
 
 #ENV SETUP
@@ -34,7 +35,10 @@ if __name__ == "__main__":
     # algorithm = NStepSARSA(env=env, eps=EPS, digitizer=digitzer,
     #                        discount=DISCOUNT, alpha=ALPHA, n=N)
 
-    algorithm = NStepSarsaOffPolicy(env=env, eps=EPS, digitizer=digitzer,
+    # algorithm = NStepSarsaOffPolicy(env=env, eps=EPS, digitizer=digitzer,
+    #                        discount=DISCOUNT, alpha=ALPHA, n=N)
+    
+    algorithm = NStepTreeBackup(env=env, eps=EPS, digitizer=digitzer,
                            discount=DISCOUNT, alpha=ALPHA, n=N)
 
     Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=1_000)

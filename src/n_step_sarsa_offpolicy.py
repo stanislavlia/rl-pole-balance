@@ -72,7 +72,7 @@ class NStepSarsaOffPolicy():
         episode_lens = []
 
         #For each episode...
-        for i in tqdm(range(n_episodes), desc=f"n-step-Sarsa(n={self.n})"):
+        for i in tqdm(range(n_episodes), desc=f"n-step-Sarsa-OffPolicy(n={self.n})"):
             
             #init state
             state, _ = self.env.reset()
