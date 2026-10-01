@@ -11,6 +11,9 @@ env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS,
                render_mode="human" if HUMAN_MODE else None)
 observation, info = env.reset()
 
+
+lfa =  LinearApproximatedValueFunc(n_actions=2)
+
 for _ in range(500):
 
     action = env.action_space.sample()  # Take a random action
@@ -18,6 +21,9 @@ for _ in range(500):
     state_rep = LinearApproximatedValueFunc.get_state_representation(observation)
 
     print(f"Observation: {observation} | representation: {state_rep} | action: {action}")
+
+    estimate_value = lfa.estimate_value(observation, action=action)
+    print("Estimated value =  ", estimate_value)
 
 
     observation, reward, terminated, truncated, info = env.step(action)

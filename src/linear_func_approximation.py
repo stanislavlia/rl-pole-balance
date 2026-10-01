@@ -5,7 +5,7 @@ class LinearApproximatedValueFunc():
     def __init__(self, n_actions):
         
         self.n_actions = n_actions
-        self.n_features = 10 #Hardcoded state representation function
+        self.n_features = 11 #Hardcoded state representation function
 
         self.weights_vectors = self._initialize_weights()
 
@@ -18,7 +18,7 @@ class LinearApproximatedValueFunc():
             #store separate weights vector for each action
             #initialize to zero
             weights_vectors.append(
-                np.zeros(self.n_features ** self.poly)
+                np.zeros(self.n_features)
             )
         return weights_vectors
     
@@ -29,6 +29,7 @@ class LinearApproximatedValueFunc():
         position, velocity, angle, angular_velocity = state
 
         return np.array([
+          1, #bias
           position,
           velocity,
           angle,
@@ -44,3 +45,11 @@ class LinearApproximatedValueFunc():
           velocity ** 2,
           angular_velocity ** 2
         ])
+
+    def estimate_value(self, state: list, action : int):
+
+        #retrieve needed weights for corresponding action
+        weights = self.weights_vectors[action]
+        feature_vector = self.get_state_representation(state)
+
+        return np.dot(weights, feature_vector)
