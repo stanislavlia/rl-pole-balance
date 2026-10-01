@@ -1,57 +1,28 @@
 import gymnasium as gym
 import time
-from policy import RandomPolicy, test_policy
-from digitize_state import PoleBalanceDigitizer
-from n_step_sarsa import NStepSARSA
-from n_step_sarsa_offpolicy import NStepSarsaOffPolicy
-from n_step_tree_backup import NStepTreeBackup
-import numpy as np
+from linear_func_approximation import LinearApproximatedValueFunc
+#https://gymnasium.farama.org/environments/classic_control/cart_pole/
 
-#ENV SETUP
 HUMAN_MODE=True
-DISPLAY_LAG_SEC=0.02
 MAX_EPISODE_STEPS=1000
 
-#REPRESENTATION
-STATE_N_BINS=10
 
-ACTION_SPACE=[0, 1]
+env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS,
+               render_mode="human" if HUMAN_MODE else None)
+observation, info = env.reset()
 
-#HYPERPARAMS
-N=10
-ALPHA=0.05
-EPS=0.1
-DISCOUNT=0.995
-N_EPISODES=5_000
+for _ in range(500):
+
+    action = env.action_space.sample()  # Take a random action
+
+    state_rep = LinearApproximatedValueFunc.get_state_representation(observation)
+
+    print(f"Observation: {observation} | representation: {state_rep} | action: {action}")
 
 
-if __name__ == "__main__":
-    digitzer = PoleBalanceDigitizer(cart_position_bins=STATE_N_BINS,
-                                    cart_velocity_bins=STATE_N_BINS,
-                                    pole_angle_bins=STATE_N_BINS,
-                                    pole_angular_velocity_bins=STATE_N_BINS)
-    env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS)
+    observation, reward, terminated, truncated, info = env.step(action)
+    
+    if terminated or truncated:
+        observation, info = env.reset()
 
-    # algorithm = NStepSARSA(env=env, eps=EPS, digitizer=digitzer,
-    #                        discount=DISCOUNT, alpha=ALPHA, n=N)
-
-    # algorithm = NStepSarsaOffPolicy(env=env, eps=EPS, digitizer=digitzer,
-    #                        discount=DISCOUNT, alpha=ALPHA, n=N)
-
-    algorithm = NStepTreeBackup(env=env, eps=EPS, digitizer=digitzer,
-                           discount=DISCOUNT, alpha=ALPHA, n=N)
-
-    Q_learned, policy = algorithm.control(n_episodes=N_EPISODES, verbose=True, report_each_n=1_000)
-
-    # Run learned policy, human render mode
-    rewards = test_policy(
-        env_id="CartPole-v1",
-        policy=policy,
-        digitizer=digitzer,
-        n_episodes=10,
-        human=True,
-        max_episode_steps=MAX_EPISODE_STEPS,
-        display_lag_sec=DISPLAY_LAG_SEC,
-    )
-
-    print(f"\nMean reward: {np.mean(rewards):.1f}  |  Max: {max(rewards):.0f}  |  Min: {min(rewards):.0f}")
+env.close()
