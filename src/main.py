@@ -1,34 +1,89 @@
 import gymnasium as gym
-import time
-from linear_func_approximation import LinearApproximatedValueFunc
-#https://gymnasium.farama.org/environments/classic_control/cart_pole/
+import numpy as np
+import matplotlib.pyplot as plt
+from sarsa import SarsaFA
+# https://gymnasium.farama.org/environments/classic_control/cart_pole/
 
-HUMAN_MODE=True
-MAX_EPISODE_STEPS=1000
-
-
-env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS,
-               render_mode="human" if HUMAN_MODE else None)
-observation, info = env.reset()
-
-
-lfa =  LinearApproximatedValueFunc(n_actions=2)
-
-for _ in range(500):
-
-    action = env.action_space.sample()  # Take a random action
-
-    state_rep = LinearApproximatedValueFunc.get_state_representation(observation)
-
-    print(f"Observation: {observation} | representation: {state_rep} | action: {action}")
-
-    estimate_value = lfa.estimate_value(observation, action=action)
-    print("Estimated value =  ", estimate_value)
+N_TRAIN_EPISODES = 20_000
+N_EVAL_EPISODES = 20
+MAX_EPISODE_STEPS = 1000
+ALPHA = 0.01
+EPSILON = 0.015
 
 
-    observation, reward, terminated, truncated, info = env.step(action)
-    
-    if terminated or truncated:
-        observation, info = env.reset()
+def moving_average(x, window):
+    """Simple moving average; returns (x_positions, smoothed_values)."""
+    x = np.asarray(x, dtype=float)
+    window = max(1, min(window, len(x)))
+    smoothed = np.convolve(x, np.ones(window) / window, mode="valid")
+    return np.arange(window - 1, len(x)), smoothed
 
-env.close()
+
+def plot_training(episode_lens, update_magnitudes, len_window=50, td_window=1000):
+    episode_lens = np.asarray(episode_lens)
+    td_abs = np.abs(np.asarray(update_magnitudes))   # TD errors are signed -> use |δ|
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
+    # Episode lengths (one value per episode)
+    ax1.plot(episode_lens, alpha=0.3, label="Episode length")
+    xs, ys = moving_average(episode_lens, len_window)
+    ax1.plot(xs, ys, linewidth=2, label=f"{len_window}-episode moving avg")
+    ax1.set_xlabel("Episode")
+    ax1.set_ylabel("Steps balanced")
+    ax1.set_title("Episode length")
+    ax1.legend()
+    ax1.grid(alpha=0.3)
+
+    # TD-error magnitudes (one value per step -> much longer series, bigger window)
+    xs, ys = moving_average(td_abs, td_window)
+    ax2.plot(xs, ys, linewidth=1.5, color="tab:red")
+    ax2.set_xlabel("Training step")
+    ax2.set_ylabel("|TD error|")
+    ax2.set_yscale("log")   # TD errors can span orders of magnitude
+    ax2.set_title(f"|TD error| ({td_window}-step moving avg)")
+    ax2.grid(alpha=0.3, which="both")
+
+    fig.suptitle("Semi-gradient Sarsa on CartPole")
+    fig.tight_layout()
+    plt.show()
+
+
+# ---------------------------------------------------------------
+# 1. Train without rendering
+# ---------------------------------------------------------------
+train_env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS, render_mode=None)
+
+sarsa_fa = SarsaFA(alpha=ALPHA, epsilon=EPSILON, discount=1.0)
+episode_lens, update_magnitudes = sarsa_fa.control(train_env, n_episodes=N_TRAIN_EPISODES)
+train_env.close()
+
+print(f"Average episode length over last 100 training episodes: {np.mean(episode_lens[-100:]):.1f}")
+
+# ---------------------------------------------------------------
+# 2. Evaluate the learned policy greedily, with rendering
+# ---------------------------------------------------------------
+eval_env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS, render_mode="human")
+q = sarsa_fa.linear_fa   # the trained approximator, not a fresh one
+
+eval_returns = []
+for ep in range(N_EVAL_EPISODES):
+    observation, info = eval_env.reset()
+    done, ep_return = False, 0.0
+
+    while not done:
+        action = q.eps_greedy_select_action(observation, eps=0.0)  # pure greedy
+        observation, reward, terminated, truncated, info = eval_env.step(action)
+        ep_return += reward
+        done = terminated or truncated
+
+    eval_returns.append(ep_return)
+    print(f"Eval episode {ep + 1:2d}: return = {ep_return:.0f}")
+
+eval_env.close()
+print(f"Mean evaluation return: {np.mean(eval_returns):.1f} (max possible {MAX_EPISODE_STEPS})")
+
+# ---------------------------------------------------------------
+# 3. Plots at the very end
+# ---------------------------------------------------------------
+plot_training(episode_lens, update_magnitudes)
