@@ -2,13 +2,23 @@ import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
 from sarsa import SarsaFA
+from n_step_sarsa import NStepSarsaFA
 # https://gymnasium.farama.org/environments/classic_control/cart_pole/
 
-N_TRAIN_EPISODES = 20_000
-N_EVAL_EPISODES = 20
-MAX_EPISODE_STEPS = 1000
+N_TRAIN_EPISODES = 1000
+
+N_EVAL_EPISODES = 10
+MAX_EPISODE_STEPS = 3000
+MAX_STEPS_EVAL = 500   # step cap per evaluation episode
+REPORT_WINDOW = 50   # progress bar shows avg length over this many last episodes
 ALPHA = 0.01
-EPSILON = 0.015
+EPSILON = 0.01
+
+#for n-step SARSA
+N=3
+
+# "poly" or "fourier"
+REPRESENTATION = "fourier"
 
 
 def moving_average(x, window):
@@ -54,8 +64,10 @@ def plot_training(episode_lens, update_magnitudes, len_window=50, td_window=1000
 # ---------------------------------------------------------------
 train_env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS, render_mode=None)
 
-sarsa_fa = SarsaFA(alpha=ALPHA, epsilon=EPSILON, discount=1.0)
-episode_lens, update_magnitudes = sarsa_fa.control(train_env, n_episodes=N_TRAIN_EPISODES)
+#sarsa_fa = SarsaFA(alpha=ALPHA, epsilon=EPSILON, discount=1.0, representation=REPRESENTATION)
+sarsa_fa = NStepSarsaFA(n=N, alpha=ALPHA, epsilon=EPSILON, discount=1.0, representation=REPRESENTATION)
+
+episode_lens, update_magnitudes = sarsa_fa.control(train_env, n_episodes=N_TRAIN_EPISODES, report_window=REPORT_WINDOW)
 train_env.close()
 
 print(f"Average episode length over last 100 training episodes: {np.mean(episode_lens[-100:]):.1f}")
@@ -63,7 +75,7 @@ print(f"Average episode length over last 100 training episodes: {np.mean(episode
 # ---------------------------------------------------------------
 # 2. Evaluate the learned policy greedily, with rendering
 # ---------------------------------------------------------------
-eval_env = gym.make("CartPole-v1", max_episode_steps=MAX_EPISODE_STEPS, render_mode="human")
+eval_env = gym.make("CartPole-v1", max_episode_steps=MAX_STEPS_EVAL, render_mode="human")
 q = sarsa_fa.linear_fa   # the trained approximator, not a fresh one
 
 eval_returns = []
@@ -81,7 +93,7 @@ for ep in range(N_EVAL_EPISODES):
     print(f"Eval episode {ep + 1:2d}: return = {ep_return:.0f}")
 
 eval_env.close()
-print(f"Mean evaluation return: {np.mean(eval_returns):.1f} (max possible {MAX_EPISODE_STEPS})")
+print(f"Mean evaluation return: {np.mean(eval_returns):.1f} (max possible {MAX_STEPS_EVAL})")
 
 # ---------------------------------------------------------------
 # 3. Plots at the very end

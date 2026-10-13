@@ -3,21 +3,24 @@ from linear_func_approximation import LinearApproximatedValueFunc
 from tqdm import tqdm
 
 class SarsaFA():
-    def __init__(self, alpha, epsilon, discount=1.0):
+    def __init__(self, alpha, epsilon, discount=1.0, representation="poly"):
         
         self.alpha = alpha
         self.epsilon = epsilon
         self.discount = discount
         
-        self.linear_fa = LinearApproximatedValueFunc(n_actions=2)
+        self.linear_fa = LinearApproximatedValueFunc(n_actions=2, representation=representation)
 
 
-    def control(self, env, n_episodes):
+    def control(self, env, n_episodes, report_window=50):
         
         update_magnitudes = []
         episode_lens = []
 
-        for i in tqdm(range(n_episodes), desc="SARSA with FA Learning..."):
+        pbar = tqdm(range(n_episodes), desc="SARSA with FA Learning...")
+        for i in pbar:
+            if episode_lens:
+                pbar.set_postfix(avg_len=f"{np.mean(episode_lens[-report_window:]):.1f}")
 
             done = False
             state, info = env.reset()
