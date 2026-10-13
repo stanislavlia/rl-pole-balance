@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sarsa import SarsaFA
 from n_step_sarsa import NStepSarsaFA
+from eval import evaluate_policy
 # https://gymnasium.farama.org/environments/classic_control/cart_pole/
 
 N_TRAIN_EPISODES = 1000
@@ -10,12 +11,14 @@ N_TRAIN_EPISODES = 1000
 N_EVAL_EPISODES = 10
 MAX_EPISODE_STEPS = 3000
 MAX_STEPS_EVAL = 500   # step cap per evaluation episode
+N_ROBUST_EVAL = 100   # random start states per difficulty level
+EVAL_SEED = 0         # fixed seed -> identical start states across runs
 REPORT_WINDOW = 50   # progress bar shows avg length over this many last episodes
-ALPHA = 0.01
-EPSILON = 0.01
+ALPHA = 0.001
+EPSILON = 0.02
 
 #for n-step SARSA
-N=3
+N=5
 
 # "poly" or "fourier"
 REPRESENTATION = "fourier"
@@ -73,7 +76,12 @@ train_env.close()
 print(f"Average episode length over last 100 training episodes: {np.mean(episode_lens[-100:]):.1f}")
 
 # ---------------------------------------------------------------
-# 2. Evaluate the learned policy greedily, with rendering
+# 2a. Robustness eval: greedy rollouts from random start states
+# ---------------------------------------------------------------
+evaluate_policy(sarsa_fa.linear_fa, n=N_ROBUST_EVAL, max_steps=MAX_STEPS_EVAL, seed=EVAL_SEED)
+
+# ---------------------------------------------------------------
+# 2b. Evaluate the learned policy greedily, with rendering
 # ---------------------------------------------------------------
 eval_env = gym.make("CartPole-v1", max_episode_steps=MAX_STEPS_EVAL, render_mode="human")
 q = sarsa_fa.linear_fa   # the trained approximator, not a fresh one
